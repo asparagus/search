@@ -32,13 +32,10 @@ class Search:
 
         while len(queue) > 0:
             state = self.pop(queue)
-            # print('Analyzing: ' + str(state))
-
             if problem.is_solution(state):
                 return state
 
             new_states = problem.branch(state)
-            # print new_states
             for state in new_states:
                 if state not in seen:
                     self.push(queue, state)
@@ -48,7 +45,20 @@ class Search:
 
 
 class BreadthFirstSearch(Search):
-    """A breadth first search."""
+    """
+    A breadth first search.
+
+    >>> bfs = BreadthFirstSearch()
+    >>> q = bfs.create_queue()
+    >>> bfs.push(q, 1)
+    >>> bfs.push(q, 2)
+    >>> len(q)
+    2
+    >>> bfs.pop(q)
+    1
+    >>> len(q)
+    1
+    """
 
     def create_queue(self):
         """Create a FIFO queue for storing the states in the search."""
@@ -64,7 +74,20 @@ class BreadthFirstSearch(Search):
 
 
 class DepthFirstSearch(Search):
-    """A depth first search."""
+    """
+    A depth first search.
+
+    >>> dfs = DepthFirstSearch()
+    >>> q = dfs.create_queue()
+    >>> dfs.push(q, 1)
+    >>> dfs.push(q, 2)
+    >>> len(q)
+    2
+    >>> dfs.pop(q)
+    2
+    >>> len(q)
+    1
+    """
 
     def create_queue(self):
         """Create a LIFO stack for storing the states in the search."""
@@ -92,6 +115,12 @@ class AStarSearch(Search):
         The heuristic must be admissible to ensure an optimal solution.
 
         If no heuristic is provided, the Zero Heuristic is used.
+
+        >>> a = AStarSearch()
+        >>> a.heuristic(1)
+        0
+        >>> a.heuristic("Sample")
+        0
         """
         self.heuristic = heuristic
 
@@ -112,24 +141,10 @@ class AStarSearch(Search):
         return heapq.heappop(queue)[1]
 
 
+def unit_test():
+    """Test the module."""
+    import doctest
+    doctest.testmod()
+
 if __name__ == '__main__':
-    import problem
-    adjacency_matrix = [
-        [0, 1, 0, 0, 1],
-        [1, 0, 0, 0, 1],
-        [1, 0, 0, 0, 0],
-        [0, 0, 1, 0, 0],
-        [0, 1, 0, 1, 0]]
-
-    start = 4
-    end = 0
-
-    spp = problem.ShortestPathProblem(adjacency_matrix, start, end)
-    bfs = BreadthFirstSearch()
-    dfs = DepthFirstSearch()
-    a = AStarSearch()
-
-    print bfs.solve(spp)
-    print dfs.solve(spp)
-    print a.solve(spp)
-
+    unit_test()
