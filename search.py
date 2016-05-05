@@ -105,7 +105,7 @@ class DepthFirstSearch(Search):
 class AStarSearch(Search):
     """An optiminal search."""
 
-    def __init__(self, heuristic=lambda x: 0):
+    def __init__(self, heuristic=None):
         """
         Initialize an instance of A* search.
 
@@ -123,6 +123,8 @@ class AStarSearch(Search):
         0
         """
         self.heuristic = heuristic
+        if not heuristic:
+            self.heuristic = ZeroHeuristic()
 
     def create_queue(self):
         """Create a priority queue for storing the states in the search."""
@@ -139,6 +141,30 @@ class AStarSearch(Search):
     def pop(self, queue):
         """Get the next state from the priority queue."""
         return heapq.heappop(queue)[1]
+
+
+class Heuristic:
+    """An evaluation function used for heuristic purposes."""
+
+    def __call__(self, state):
+        """Evaluate a state."""
+        raise NotImplementedError()
+
+
+class ZeroHeuristic(Heuristic):
+    """
+    The Zero Heuristic.
+
+    >>> h = ZeroHeuristic()
+    >>> h(1)
+    0
+    >>> h("state")
+    0
+    """
+
+    def __call__(self, state):
+        """Evaluate a state, return zero."""
+        return 0
 
 
 def unit_test():
