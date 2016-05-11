@@ -12,6 +12,16 @@ class Search:
         """Create a queue for storing the states in the search."""
         raise NotImplementedError()
 
+    def create_seen_set(self):
+        """Create a structure to store information of states seen."""
+        return set()
+
+    def push_if_new(self, queue, state, seen):
+        """Add a state to the queue if it hasn't been evaluated yet."""
+        if state not in seen:
+            self.push(queue, state)
+            seen[state] = True
+
     def push(self, queue, state):
         """Add a state to the queue."""
         raise NotImplementedError()
@@ -25,10 +35,8 @@ class Search:
         initial_state = problem.initial_state()
 
         queue = self.create_queue()
-        seen = set()
-
-        self.push(queue, initial_state)
-        seen.add(initial_state)
+        seen = self.create_seen_set()
+        self.push_if_new(queue, initial_state, seen)
 
         while len(queue) > 0:
             state = self.pop(queue)
@@ -37,9 +45,7 @@ class Search:
 
             new_states = problem.branch(state)
             for state in new_states:
-                if state not in seen:
-                    self.push(queue, state)
-                    seen.add(state)
+                self.push_if_new(queue, state, seen)
 
         return None
 
@@ -123,6 +129,7 @@ class AStarSearch(Search):
         0
         """
         self.heuristic = heuristic
+        self.value_states_dict = {}
         if not heuristic:
             self.heuristic = ZeroHeuristic()
 
@@ -131,16 +138,42 @@ class AStarSearch(Search):
         return []
 
     def push(self, queue, state):
-        """Add a state to the priority queue."""
+        """
+        Add a state to the priority queue.
+
+        Manage the priority queue as a heap of (value, stack),
+        where stack contains all the states with the same value.
+
+        This minimizes the number of times the heap is used.
+
+        States are retrieved using LIFO in order to try a depth first approach.
+
+        [value] => stack
+        relationships are stored in the variable self.value_states_dict
+        """
         g = state.value
         h = self.heuristic(state)
         f = g + h
 
-        heapq.heappush(queue, (f, state))
+        if f in self.value_states_dict:
+            stack = self.value_states_dict[f]
+        else:
+            stack = []
+            self.value_states_dict[f] = stack
+            heapq.heappush(queue, (f, stack))
+
+        stack.append(state)
 
     def pop(self, queue):
         """Get the next state from the priority queue."""
-        return heapq.heappop(queue)[1]
+        value, stack = queue[0]
+        element = stack.pop()
+
+        if not stack:
+            heapq.heappop(queue)
+            del self.value_states_dict[value]
+
+        return element
 
 
 class Heuristic:
