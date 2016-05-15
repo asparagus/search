@@ -16,11 +16,11 @@ class Search:
         """Create a structure to store information of states seen."""
         return set()
 
-    def push_if_new(self, queue, state, seen):
+    def push_if_new(self, queue, state, seen, problem):
         """Add a state to the queue if it hasn't been evaluated yet."""
         if state not in seen:
             self.push(queue, state)
-            seen[state] = True
+            seen.add(state)
 
     def push(self, queue, state):
         """Add a state to the queue."""
@@ -36,7 +36,7 @@ class Search:
 
         queue = self.create_queue()
         seen = self.create_seen_set()
-        self.push_if_new(queue, initial_state, seen)
+        self.push_if_new(queue, initial_state, seen, problem)
 
         while len(queue) > 0:
             state = self.pop(queue)
@@ -45,7 +45,7 @@ class Search:
 
             new_states = problem.branch(state)
             for state in new_states:
-                self.push_if_new(queue, state, seen)
+                self.push_if_new(queue, state, seen, problem)
 
         return None
 
