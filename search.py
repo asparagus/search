@@ -32,7 +32,7 @@ class Search:
 
     def solve(self, problem, initial_state=None):
         """Get a solution to the problem."""
-        initial_state = initial_state or problem.initial_state
+        initial_state = initial_state or problem.initial_state()
 
         queue = self.create_queue()
         seen = self.create_seen_set()
