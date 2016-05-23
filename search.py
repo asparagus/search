@@ -3,6 +3,7 @@
 """Algorithms for search."""
 import collections
 import heapq
+import time
 
 
 class Search:
@@ -30,8 +31,11 @@ class Search:
         """Get the next state from the queue."""
         raise NotImplementedError()
 
-    def solve(self, problem, initial_state=None):
+    def solve(self, problem, initial_state=None, timeout=None):
         """Get a solution to the problem."""
+        if timeout:
+            start = time.time()
+
         initial_state = initial_state or problem.initial_state()
 
         queue = self.create_queue()
@@ -39,6 +43,11 @@ class Search:
         self.push_if_new(queue, initial_state, seen, problem)
 
         while len(queue) > 0:
+            if timeout:
+                current = time.time()
+                if current - start > timeout:
+                    raise Exception("Function timed out.")
+
             state = self.pop(queue)
             if problem.is_solution(state):
                 return state
@@ -137,7 +146,7 @@ class AStarSearch(Search):
         """Create a priority queue for storing the states in the search."""
         return []
 
-    def push(self, queue, state):
+    def push(self, queue, state, value=None):
         """
         Add a state to the priority queue.
 
@@ -151,9 +160,12 @@ class AStarSearch(Search):
         [value] => stack
         relationships are stored in the variable self.value_states_dict
         """
-        g = state.value
-        h = self.heuristic(state)
-        f = g + h
+        if value is None:
+            g = state.value
+            h = self.heuristic(state)
+            f = g + h
+        else:
+            f = value
 
         if f in self.value_states_dict:
             stack = self.value_states_dict[f]
@@ -174,6 +186,106 @@ class AStarSearch(Search):
             del self.value_states_dict[value]
 
         return element
+
+
+class IterativeDepthFirstSearch(AStarSearch):
+    """
+    An optiminal iterative search.
+    This algorithm iteratively improves the found solution until it's optimal
+    or time runs out.
+    """
+
+    def pop(self, queue):
+        """Get the next state from the priority queue."""
+        value, stack = queue[0]
+        element = stack.pop()
+
+        if not stack:
+            heapq.heappop(queue)
+            del self.value_states_dict[value]
+
+        return value, element
+
+    def solve(self, problem, initial_state=None, timeout=None):
+        """Get a solution to the problem."""
+        if timeout:
+            start = time.time()
+
+        initial_state = initial_state or problem.initial_state()
+        initial_heuristic_value = initial_state.value + self.heuristic(
+            initial_state)
+        print "Optimum might be %s" % initial_heuristic_value
+
+        queue = self.create_queue()
+        seen = self.create_seen_set()
+        self.push_if_new(queue, initial_state, seen, problem)
+
+        best_solution = None
+        best_value = float('inf')
+
+        while len(queue) > 0:
+            if timeout:
+                current = time.time()
+                if current - start > timeout:
+                    return best_solution
+
+            value, state = self.pop(queue)
+
+            if value >= best_value:
+                return best_solution
+
+            new_solution = self.run(problem, state, queue, seen)
+            if new_solution:
+                new_value = new_solution.value
+
+                if new_value <= initial_heuristic_value:
+                    return new_solution
+
+                if best_solution:
+                    if new_value < best_value:
+                        best_solution = new_solution
+                        best_value = new_value
+                else:
+                    best_solution = new_solution
+                    best_value = new_value
+
+        return None
+
+    def run(self, problem, initial_state, queue, seen):
+        """
+        Get a temporary solution.
+
+        Multiple calls to run function will improve on the initial solution.
+        """
+        current_state = initial_state
+        while True:
+            if problem.is_solution(current_state):
+                return current_state
+
+            branched_states = [state for state in problem.branch(current_state)
+                               if self.is_new(state, seen, problem)]
+
+            new_seen = self.create_seen_set()
+            new_states = []
+            for state in branched_states:
+                if not new_seen or self.is_new(state, new_seen, problem):
+                    new_states.append(state)
+                    self.add_to_seen(state, new_seen, problem)
+
+            new_values = [state.value + self.heuristic(state)
+                          for state in new_states]
+
+            values_with_states = sorted(zip(new_values, new_states))
+
+            if values_with_states:
+                current_state = values_with_states[0][1]
+                for value, state in values_with_states[1:]:
+                    self.push(queue, state, value=value)
+                    self.add_to_seen(state, seen, problem)
+            else:
+                break
+
+        return None
 
 
 class Heuristic:
