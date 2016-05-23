@@ -4,6 +4,7 @@
 import collections
 import heapq
 import time
+from depq import DEPQ
 
 
 class Search:
@@ -287,6 +288,69 @@ class IterativeDepthFirstSearch(AStarSearch):
                 break
 
         return None
+
+
+class BeamSearch(AStarSearch):
+    """
+    A modified A* Search.
+
+    BeamSearch limits the memory used by keeping only a limited number
+    of intermediate solutions.
+    """
+
+    def __init__(self, heuristic=None, beam_width=100):
+        """
+        Initialize an instance of BeamSearch.
+
+        The instance requires an heuristic function which
+        receives a state and outputs an expected delta for the solution.
+
+        The heuristic must be admissible to ensure an optimal solution.
+
+        If no heuristic is provided, the Zero Heuristic is used.
+
+        >>> bs = BeamSearch()
+        >>> bs.heuristic(1)
+        0
+        >>> bs.heuristic("Sample")
+        0
+        """
+        self.heuristic = heuristic
+        self.beam_width = beam_width
+        self.value_states_dict = {}
+        if not heuristic:
+            self.heuristic = ZeroHeuristic()
+
+    def create_queue(self):
+        """Create a priority queue for storing the states in the search."""
+        return DEPQ()
+
+    def push(self, queue, state, value=None):
+        """
+        Add a state to the priority queue.
+
+        The priority queue is double ended and keeps at most beam_width items.
+        """
+        if value is None:
+            g = state.value
+            h = self.heuristic(state)
+            f = g + h
+        else:
+            f = value
+
+        # print "%s / %s" % (len(queue), self.beam_width)
+        if len(queue) >= self.beam_width:
+            high = queue.high()
+            if f < high:
+                queue.insert(state, f)
+                queue.popfirst()
+        else:
+            queue.insert(state, f)
+
+    def pop(self, queue):
+        """Get the next state from the priority queue."""
+        element = queue.poplast()
+        return element[0]
 
 
 class Heuristic:
