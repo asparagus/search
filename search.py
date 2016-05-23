@@ -191,6 +191,7 @@ class AStarSearch(Search):
 class IterativeDepthFirstSearch(AStarSearch):
     """
     An optiminal iterative search.
+
     This algorithm iteratively improves the found solution until it's optimal
     or time runs out.
     """
@@ -249,7 +250,7 @@ class IterativeDepthFirstSearch(AStarSearch):
                     best_solution = new_solution
                     best_value = new_value
 
-        return None
+        return best_solution
 
     def run(self, problem, initial_state, queue, seen):
         """
