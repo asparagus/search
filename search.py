@@ -210,7 +210,7 @@ class IterativeDepthFirstSearch(AStarSearch):
 
     def solve(self, problem, initial_state=None, timeout=None):
         """Get a solution to the problem."""
-        if timeout:
+        if timeout is not None:
             start = time.time()
 
         initial_state = initial_state or problem.initial_state()
@@ -226,17 +226,22 @@ class IterativeDepthFirstSearch(AStarSearch):
         best_value = float('inf')
 
         while len(queue) > 0:
-            if timeout:
-                current = time.time()
-                if current - start > timeout:
-                    return best_solution
-
             value, state = self.pop(queue)
 
             if value >= best_value:
                 return best_solution
 
-            new_solution = self.run(problem, state, queue, seen)
+            if timeout is not None:
+                current = time.time()
+                remaining_time = timeout - (current - start)
+                if remaining_time <= 0:
+                    return best_solution
+                else:
+                    new_solution = self.run(
+                        problem, state, queue, seen, remaining_time)
+            else:
+                new_solution = self.run(problem, state, queue, seen)
+
             if new_solution:
                 new_value = new_solution.value
 
@@ -253,14 +258,23 @@ class IterativeDepthFirstSearch(AStarSearch):
 
         return best_solution
 
-    def run(self, problem, initial_state, queue, seen):
+    def run(self, problem, initial_state, queue, seen, timeout=None):
         """
         Get a temporary solution.
 
         Multiple calls to run function will improve on the initial solution.
         """
+        if timeout is not None:
+            start = time.time()
+
         current_state = initial_state
         while True:
+            if timeout is not None:
+                current = time.time()
+                remaining_time = timeout - (current - start)
+                if remaining_time <= 0:
+                    return None
+
             if problem.is_solution(current_state):
                 return current_state
 
@@ -274,10 +288,14 @@ class IterativeDepthFirstSearch(AStarSearch):
                     new_states.append(state)
                     self.add_to_seen(state, new_seen, problem)
 
+            if new_states:
+                new_states.reverse()
+
             new_values = [state.value + self.heuristic(state)
                           for state in new_states]
 
-            values_with_states = sorted(zip(new_values, new_states))
+            # values_with_states = sorted(zip(new_values, new_states))
+            values_with_states = zip(new_values, new_states)
 
             if values_with_states:
                 current_state = values_with_states[0][1]
