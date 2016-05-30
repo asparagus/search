@@ -216,7 +216,7 @@ class IterativeDepthFirstSearch(AStarSearch):
         initial_state = initial_state or problem.initial_state()
         initial_heuristic_value = initial_state.value + self.heuristic(
             initial_state)
-        print "Optimum might be %s" % initial_heuristic_value
+        # print "Optimum might be %s" % initial_heuristic_value
 
         queue = self.create_queue()
         seen = self.create_seen_set()
