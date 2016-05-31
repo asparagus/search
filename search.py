@@ -4,7 +4,15 @@
 import collections
 import heapq
 import time
-from depq import DEPQ
+
+# # To enable BeamSearch, uncomment this line.
+# # You will need to install depq:
+# # sudo pip install depq
+# # The library has a bug in its __init__.py file
+# # When trying to import DEPQ it will report an error.
+# # Fix it by replacing "from depq.depq import DEPQ"
+# # with "from depq import DEPQ"
+# from depq import DEPQ
 
 
 class Search:
@@ -118,7 +126,7 @@ class DepthFirstSearch(Search):
         return queue.pop()
 
 
-class AStarSearch(Search):
+class BestFirstSearch(Search):
     """An optiminal search."""
 
     def __init__(self, heuristic=None):
@@ -132,7 +140,7 @@ class AStarSearch(Search):
 
         If no heuristic is provided, the Zero Heuristic is used.
 
-        >>> a = AStarSearch()
+        >>> a = BestFirstSearch()
         >>> a.heuristic(1)
         0
         >>> a.heuristic("Sample")
@@ -189,13 +197,17 @@ class AStarSearch(Search):
         return element
 
 
-class IterativeDepthFirstSearch(AStarSearch):
+class IterativeDepthFirstSearch(BestFirstSearch):
     """
-    An optiminal iterative search.
+    An optimal iterative search.
 
     This algorithm iteratively improves the found solution until it's optimal
     or time runs out.
     """
+
+    def sort_states(self, problem, states):
+        """Sort branched states before insertion."""
+        pass
 
     def pop(self, queue):
         """Get the next state from the priority queue."""
@@ -208,9 +220,11 @@ class IterativeDepthFirstSearch(AStarSearch):
 
         return value, element
 
-    def solve(self, problem, initial_state=None, timeout=None):
+    def solve(self, problem, initial_state=None,
+              timeout=None, soft_timeout=None):
         """Get a solution to the problem."""
-        if timeout is not None:
+        print timeout, soft_timeout
+        if any((timeout, soft_timeout)):
             start = time.time()
 
         initial_state = initial_state or problem.initial_state()
@@ -231,9 +245,21 @@ class IterativeDepthFirstSearch(AStarSearch):
             if value >= best_value:
                 return best_solution
 
-            if timeout is not None:
+            if any((timeout, soft_timeout)):
                 current = time.time()
-                remaining_time = timeout - (current - start)
+                ellapsed_time = current - start
+                if best_solution and soft_timeout:
+                    time_limit = soft_timeout
+                elif timeout:
+                    time_limit = timeout
+                else:
+                    time_limit = None
+
+                if time_limit is None:
+                    remaining_time = None
+                else:
+                    remaining_time = time_limit - ellapsed_time
+
                 if remaining_time <= 0:
                     return best_solution
                 else:
@@ -258,7 +284,8 @@ class IterativeDepthFirstSearch(AStarSearch):
 
         return best_solution
 
-    def run(self, problem, initial_state, queue, seen, timeout=None):
+    def run(self, problem, initial_state, queue, seen,
+            timeout=None):
         """
         Get a temporary solution.
 
@@ -281,6 +308,8 @@ class IterativeDepthFirstSearch(AStarSearch):
             branched_states = [state for state in problem.branch(current_state)
                                if self.is_new(state, seen, problem)]
 
+            self.sort_states(problem, branched_states)
+
             new_seen = self.create_seen_set()
             new_states = []
             for state in branched_states:
@@ -294,7 +323,6 @@ class IterativeDepthFirstSearch(AStarSearch):
             new_values = [state.value + self.heuristic(state)
                           for state in new_states]
 
-            # values_with_states = sorted(zip(new_values, new_states))
             values_with_states = zip(new_values, new_states)
 
             if values_with_states:
@@ -307,68 +335,70 @@ class IterativeDepthFirstSearch(AStarSearch):
 
         return None
 
+# # See message on import to enable BeamSearch.
+# # BeamSearch is dependent on the DEPQ library, which has a bug.
+# class BeamSearch(BestFirstSearch):
+#     """
+#     A modified BestFirstSearch Search.
 
-class BeamSearch(AStarSearch):
-    """
-    A modified A* Search.
+#     BeamSearch limits the memory used by keeping only a limited number
+#     of intermediate solutions.
+#     """
 
-    BeamSearch limits the memory used by keeping only a limited number
-    of intermediate solutions.
-    """
+#     def __init__(self, heuristic=None, beam_width=100):
+#         """
+#         Initialize an instance of BeamSearch.
 
-    def __init__(self, heuristic=None, beam_width=100):
-        """
-        Initialize an instance of BeamSearch.
+#         The instance requires an heuristic function which
+#         receives a state and outputs an expected delta for the solution.
 
-        The instance requires an heuristic function which
-        receives a state and outputs an expected delta for the solution.
+#         The heuristic must be admissible to ensure an optimal solution.
 
-        The heuristic must be admissible to ensure an optimal solution.
+#         If no heuristic is provided, the Zero Heuristic is used.
 
-        If no heuristic is provided, the Zero Heuristic is used.
+#         >>> bs = BeamSearch()
+#         >>> bs.heuristic(1)
+#         0
+#         >>> bs.heuristic("Sample")
+#         0
+#         """
+#         self.heuristic = heuristic
+#         self.beam_width = beam_width
+#         self.value_states_dict = {}
+#         if not heuristic:
+#             self.heuristic = ZeroHeuristic()
 
-        >>> bs = BeamSearch()
-        >>> bs.heuristic(1)
-        0
-        >>> bs.heuristic("Sample")
-        0
-        """
-        self.heuristic = heuristic
-        self.beam_width = beam_width
-        self.value_states_dict = {}
-        if not heuristic:
-            self.heuristic = ZeroHeuristic()
+#     def create_queue(self):
+#         """Create a priority queue for storing the states in the search."""
+#         return DEPQ()
 
-    def create_queue(self):
-        """Create a priority queue for storing the states in the search."""
-        return DEPQ()
+#     def push(self, queue, state, value=None):
+#         """
+#         Add a state to the priority queue.
 
-    def push(self, queue, state, value=None):
-        """
-        Add a state to the priority queue.
+#         The priority queue is double ended and keeps
+#         at most beam_width items.
+#         """
+#         if value is None:
+#             g = state.value
+#             h = self.heuristic(state)
+#             f = g + h
+#         else:
+#             f = value
 
-        The priority queue is double ended and keeps at most beam_width items.
-        """
-        if value is None:
-            g = state.value
-            h = self.heuristic(state)
-            f = g + h
-        else:
-            f = value
+#         # print "%s / %s" % (len(queue), self.beam_width)
+#         if len(queue) >= self.beam_width:
+#             high = queue.high()
+#             if f < high:
+#                 queue.insert(state, f)
+#                 queue.popfirst()
+#         else:
+#             queue.insert(state, f)
 
-        # print "%s / %s" % (len(queue), self.beam_width)
-        if len(queue) >= self.beam_width:
-            high = queue.high()
-            if f < high:
-                queue.insert(state, f)
-                queue.popfirst()
-        else:
-            queue.insert(state, f)
-
-    def pop(self, queue):
-        """Get the next state from the priority queue."""
-        element = queue.poplast()
-        return element[0]
+#     def pop(self, queue):
+#         """Get the next state from the priority queue."""
+#         element = queue.poplast()
+#         return element[0]
 
 
 class Heuristic:
