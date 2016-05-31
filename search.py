@@ -223,7 +223,6 @@ class IterativeDepthFirstSearch(BestFirstSearch):
     def solve(self, problem, initial_state=None,
               timeout=None, soft_timeout=None):
         """Get a solution to the problem."""
-        print timeout, soft_timeout
         if any((timeout, soft_timeout)):
             start = time.time()
 
