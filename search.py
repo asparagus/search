@@ -22,6 +22,14 @@ class Search:
         """Create a queue for storing the states in the search."""
         raise NotImplementedError()
 
+    def is_new(self, state, seen, prbolem):
+        """Check if a state is new."""
+        return state not in seen
+
+    def add_to_seen(self, state, seen, problem):
+        """Add a state to seen set."""
+        seen.add(state)
+
     def create_seen_set(self):
         """Create a structure to store information of states seen."""
         return set()
@@ -30,7 +38,7 @@ class Search:
         """Add a state to the queue if it hasn't been evaluated yet."""
         if state not in seen:
             self.push(queue, state)
-            seen.add(state)
+            self.add_to_seen(state, seen, problem)
 
     def push(self, queue, state):
         """Add a state to the queue."""
@@ -229,7 +237,6 @@ class IterativeDepthFirstSearch(BestFirstSearch):
         initial_state = initial_state or problem.initial_state()
         initial_heuristic_value = initial_state.value + self.heuristic(
             initial_state)
-        # print "Optimum might be %s" % initial_heuristic_value
 
         queue = self.create_queue()
         seen = self.create_seen_set()
@@ -247,7 +254,7 @@ class IterativeDepthFirstSearch(BestFirstSearch):
             if any((timeout, soft_timeout)):
                 current = time.time()
                 ellapsed_time = current - start
-                if best_solution and soft_timeout:
+                if best_solution and soft_timeout is not None:
                     time_limit = soft_timeout
                 elif timeout:
                     time_limit = timeout
