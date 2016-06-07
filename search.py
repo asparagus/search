@@ -231,7 +231,8 @@ class IterativeDepthFirstSearch(BestFirstSearch):
     def solve(self, problem, initial_state=None,
               timeout=None, soft_timeout=None):
         """Get a solution to the problem."""
-        if any((timeout, soft_timeout)):
+        measure_time = timeout is not None or soft_timeout is not None
+        if measure_time:
             start = time.time()
 
         initial_state = initial_state or problem.initial_state()
@@ -251,11 +252,11 @@ class IterativeDepthFirstSearch(BestFirstSearch):
             if value >= best_value:
                 return best_solution
 
-            if any((timeout, soft_timeout)):
+            if measure_time:
                 current = time.time()
                 ellapsed_time = current - start
                 if best_solution and soft_timeout is not None:
-                    time_limit = soft_timeout
+                    time_limit = min(soft_timeout, timeout)
                 elif timeout:
                     time_limit = timeout
                 else:
