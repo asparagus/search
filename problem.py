@@ -14,8 +14,21 @@ class Problem:
         """Check whether a given state is a solution to the problem."""
         raise NotImplementedError()
 
+    def actions(self, state):
+        """Get all possible actions to be executed on a given state."""
+        raise NotImplementedError()
+
     def branch(self, state):
-        """Get all possible states derived from the given state."""
+        """Get all states branching from this one."""
+        valid_actions = self.actions(state)
+        return [action(state) for action in valid_actions]
+
+
+class Action:
+    """An action for a given problem."""
+
+    def __call__(self, state):
+        """Execute the action on a state."""
         raise NotImplementedError()
 
 
@@ -75,29 +88,33 @@ class ShortestPathProblem(Problem):
         """
         return state.index == self.end
 
-    def branch(self, state):
-        """
-        Get all possible states derived from the given state.
-
-        >>> spp = ShortestPathProblem([[0,1, 1],[1,0,1], [1,1,0]], 0, 2)
-        >>> state = spp.initial_state()
-        >>> next = spp.branch(state)
-        >>> len(next)
-        2
-        >>> next[0]
-        {index: 1, value: 1, path: [0, 1]}
-        >>> next[1]
-        {index: 2, value: 1, path: [0, 2]}
-        """
+    def actions(self, state):
+        """Get all possible actions from the given state."""
         index = state.index
-        value = state.value
-        path = state.path
-        branches = [
-            ShortestPathState(i, value + 1, path + [i])
-            for i, valid in enumerate(self.adjacency_matrix[index])
-            if valid]
+        valid_actions = [
+            ShortestPathNodeTraversal(index, other)
+            for other, valid in enumerate(self.adjacency_matrix[index])
+            if valid
+        ]
 
-        return branches
+        return valid_actions
+
+
+class ShortestPathNodeTraversal(Action):
+    """Node Traversal action for the ShortestPath Problem."""
+
+    def __init__(self, start, end):
+        """Initialize the node traversal action."""
+        self.start = start
+        self.end = end
+
+    def __call__(self, state):
+        """Execute the node traversal on a given state."""
+        return ShortestPathState(
+            self.end,
+            state.value + 1,
+            state.path + [self.end]
+        )
 
 
 class ShortestPathState(State):

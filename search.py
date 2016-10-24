@@ -69,9 +69,9 @@ class Search:
             if problem.is_solution(state):
                 return state
 
-            new_states = problem.branch(state)
-            for state in new_states:
-                self.push_if_new(queue, state, seen, problem)
+            valid_actions = problem.actions(state)
+            for action in valid_actions:
+                self.push_if_new(queue, action(state), seen, problem)
 
         return None
 
@@ -312,8 +312,11 @@ class IterativeDepthFirstSearch(BestFirstSearch):
             if problem.is_solution(current_state):
                 return current_state
 
-            branched_states = [state for state in problem.branch(current_state)
-                               if self.is_new(state, seen, problem)]
+            valid_actions = problem.actions(current_state)
+            branched_states = filter(
+                lambda x: self.is_new(x, seen, problem),
+                [action(current_state) for action in valid_actions]
+            )
 
             self.sort_states(problem, branched_states)
 
