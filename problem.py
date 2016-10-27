@@ -18,11 +18,6 @@ class Problem:
         """Get all possible actions to be executed on a given state."""
         raise NotImplementedError()
 
-    def branch(self, state):
-        """Get all states branching from this one."""
-        valid_actions = self.actions(state)
-        return [action(state) for action in valid_actions]
-
 
 class Action:
     """An action for a given problem."""
@@ -30,6 +25,14 @@ class Action:
     def __call__(self, state):
         """Execute the action on a state."""
         raise NotImplementedError()
+
+    def __str__(self):
+        """The string representation of this action."""
+        return self.__class__.__name__
+
+    def __repr__(self):
+        """The string representation of this action."""
+        return str(self)
 
 
 class State:

@@ -48,6 +48,21 @@ class Search:
         """Get the next state from the queue."""
         raise NotImplementedError()
 
+    def branch(self, problem, state):
+        """Branch a state into its possible continuations."""
+        actions = problem.actions(state)[:1]
+        new_states = []
+        for action in actions:
+            new_state = action(state)
+            try:
+                new_state._action_history = state._action_history + [action]
+            except:
+                new_state._action_history = [action]
+
+            new_states.append(new_state)
+
+        return new_states
+
     def solve(self, problem, initial_state=None, timeout=None):
         """Get a solution to the problem."""
         if timeout:
@@ -69,9 +84,9 @@ class Search:
             if problem.is_solution(state):
                 return state
 
-            valid_actions = problem.actions(state)
-            for action in valid_actions:
-                self.push_if_new(queue, action(state), seen, problem)
+            branched_states = self.branch(problem, state)
+            for branched_state in branched_states:
+                self.push_if_new(queue, branched_state, seen, problem)
 
         return None
 
@@ -312,10 +327,10 @@ class IterativeDepthFirstSearch(BestFirstSearch):
             if problem.is_solution(current_state):
                 return current_state
 
-            valid_actions = problem.actions(current_state)
+            branched_states = self.branch(problem, current_state)
             branched_states = filter(
                 lambda x: self.is_new(x, seen, problem),
-                [action(current_state) for action in valid_actions]
+                branched_states
             )
 
             self.sort_states(problem, branched_states)
@@ -329,14 +344,12 @@ class IterativeDepthFirstSearch(BestFirstSearch):
 
             if new_states:
                 new_states.reverse()
+                current_state = new_states[0]
 
-            new_values = [state.value + self.heuristic(state)
-                          for state in new_states]
+                new_values = [state.value + self.heuristic(state)
+                              for state in new_states]
 
-            values_with_states = zip(new_values, new_states)
-
-            if values_with_states:
-                current_state = values_with_states[0][1]
+                values_with_states = zip(new_values, new_states)
                 for value, state in values_with_states[1:]:
                     self.push(queue, state, value=value)
                     self.add_to_seen(state, seen, problem)
