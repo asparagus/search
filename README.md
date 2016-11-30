@@ -17,6 +17,6 @@ start = 4
 end = 0
 
 spp = problem.ShortestPathProblem(adjacency_matrix, start, end)
-a = search.AStarSearch()
+a = search.BestFirstSearch()
 a.solve(spp)
 ```
