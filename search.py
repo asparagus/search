@@ -50,7 +50,7 @@ class Search:
 
     def branch(self, problem, state):
         """Branch a state into its possible continuations."""
-        actions = problem.actions(state)[:1]
+        actions = problem.actions(state)
         new_states = []
         for action in actions:
             new_state = action(state)
