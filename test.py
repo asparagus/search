@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
-Testing BFS, DFS and A* on a ShortestPathProblem.
+Testing BFS, DFS, A*, IDFS on a ShortestPathProblem.
 
 >>> import problem
 >>> import search
@@ -18,7 +18,8 @@ Testing BFS, DFS and A* on a ShortestPathProblem.
 >>> spp = problem.ShortestPathProblem(adjacency_matrix, start, end)
 >>> bfs = search.BreadthFirstSearch()
 >>> dfs = search.DepthFirstSearch()
->>> a = search.AStarSearch()
+>>> a = search.BestFirstSearch()
+>>> idfs = search.IterativeDepthFirstSearch()
 
 >>> bfs.solve(spp)
 {index: 0, value: 2, path: [4, 1, 0]}
@@ -29,8 +30,10 @@ Testing BFS, DFS and A* on a ShortestPathProblem.
 >>> a.solve(spp)
 {index: 0, value: 2, path: [4, 1, 0]}
 
-"""
 
+>>> idfs.solve(spp)
+{index: 0, value: 2, path: [4, 1, 0]}
+"""
 
 if __name__ == '__main__':
     import doctest
