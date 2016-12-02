@@ -15,6 +15,11 @@ import time
 # from depq import DEPQ
 
 
+class TimeoutError(Exception):
+    """Exception raised when a function call times out."""
+    pass
+
+
 class Search:
     """A type of search."""
 
@@ -65,9 +70,10 @@ class Search:
 
     def solve(self, problem, initial_state=None, timeout=None):
         """Get a solution to the problem."""
-        if timeout:
-            start = time.time()
+        if not timeout:
+            timeout = float('inf')
 
+        start = time.time()
         initial_state = initial_state or problem.initial_state()
 
         queue = self.create_queue()
@@ -75,10 +81,9 @@ class Search:
         self.push_if_new(queue, initial_state, seen, problem)
 
         while len(queue) > 0:
-            if timeout:
-                current = time.time()
-                if current - start > timeout:
-                    raise Exception("Function timed out.")
+            current = time.time()
+            if current - start > timeout:
+                raise TimeoutError()
 
             state = self.pop(queue)
             if problem.is_solution(state):
@@ -246,10 +251,13 @@ class IterativeDepthFirstSearch(BestFirstSearch):
     def solve(self, problem, initial_state=None,
               timeout=None, soft_timeout=None):
         """Get a solution to the problem."""
-        measure_time = timeout is not None or soft_timeout is not None
-        if measure_time:
-            start = time.time()
+        if not timeout:
+            timeout = float('inf')
 
+        if not soft_timeout:
+            soft_timeout = float('inf')
+
+        start = time.time()
         initial_state = initial_state or problem.initial_state()
         initial_heuristic_value = initial_state.value + self.heuristic(
             initial_state)
@@ -265,42 +273,24 @@ class IterativeDepthFirstSearch(BestFirstSearch):
             value, state = self.pop(queue)
 
             if value >= best_value:
-                return best_solution
+                break
 
-            if measure_time:
-                current = time.time()
-                ellapsed_time = current - start
-                if best_solution and soft_timeout is not None:
-                    time_limit = min(soft_timeout, timeout)
-                elif timeout:
-                    time_limit = timeout
-                else:
-                    time_limit = None
+            current = time.time()
+            ellapsed_time = current - start
 
-                if time_limit is None:
-                    remaining_time = None
-                else:
-                    remaining_time = time_limit - ellapsed_time
+            if ellapsed_time > timeout:
+                raise TimeoutError()
+            elif best_solution and ellapsed_time > soft_timeout:
+                break
 
-                if remaining_time <= 0:
-                    return best_solution
-                else:
-                    new_solution = self.run(
-                        problem, state, queue, seen, remaining_time)
-            else:
-                new_solution = self.run(problem, state, queue, seen)
+            remaining_time = timeout - ellapsed_time
+            new_solution = self.run(
+                problem, state, queue, seen, remaining_time)
 
             if new_solution:
                 new_value = new_solution.value
 
-                if new_value <= initial_heuristic_value:
-                    return new_solution
-
-                if best_solution:
-                    if new_value < best_value:
-                        best_solution = new_solution
-                        best_value = new_value
-                else:
+                if new_value < best_value or not best_solution:
                     best_solution = new_solution
                     best_value = new_value
 
@@ -313,19 +303,20 @@ class IterativeDepthFirstSearch(BestFirstSearch):
 
         Multiple calls to run function will improve on the initial solution.
         """
-        if timeout is not None:
-            start = time.time()
+        if not timeout:
+            timeout = float('inf')
 
+        start = time.time()
+        reached_solution = False
         current_state = initial_state
         while True:
-            if timeout is not None:
-                current = time.time()
-                remaining_time = timeout - (current - start)
-                if remaining_time <= 0:
-                    return None
+            current = time.time()
+            if current - start > timeout:
+                break
 
             if problem.is_solution(current_state):
-                return current_state
+                reached_solution = True
+                break
 
             branched_states = self.branch(problem, current_state)
             branched_states = filter(
@@ -344,8 +335,11 @@ class IterativeDepthFirstSearch(BestFirstSearch):
 
             if new_states:
                 new_states.reverse()
+
+                # Continue the run through the first state
                 current_state = new_states[0]
 
+                # Store the rest for another run
                 new_values = [state.value + self.heuristic(state)
                               for state in new_states]
 
@@ -353,10 +347,11 @@ class IterativeDepthFirstSearch(BestFirstSearch):
                 for value, state in values_with_states[1:]:
                     self.push(queue, state, value=value)
                     self.add_to_seen(state, seen, problem)
-            else:
+
+            else: # No way to continue this run
                 break
 
-        return None
+        return current_state if reached_solution else None
 
 # # See message on import to enable BeamSearch.
 # # BeamSearch is dependent on the DEPQ library, which has a bug.
