@@ -1,27 +1,35 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 """Classes needed to model a search algorithm."""
+import abc
+import six
 
 
+@six.add_metaclass(abc.ABCMeta)
 class Problem:
     """A problem to be solved."""
 
+    @abc.abstractmethod
     def initial_state(self):
         """Return the initial state for the problem."""
         raise NotImplementedError()
 
+    @abc.abstractmethod
     def is_solution(self, state):
         """Check whether a given state is a solution to the problem."""
         raise NotImplementedError()
 
+    @abc.abstractmethod
     def actions(self, state):
         """Get all possible actions to be executed on a given state."""
         raise NotImplementedError()
 
 
+@six.add_metaclass(abc.ABCMeta)
 class Action:
     """An action for a given problem."""
 
+    @abc.abstractmethod
     def __call__(self, state):
         """Execute the action on a state."""
         raise NotImplementedError()
@@ -35,9 +43,11 @@ class Action:
         return str(self)
 
 
+@six.add_metaclass(abc.ABCMeta)
 class State:
     """(Intermediate) State in the search for a solution."""
 
+    @abc.abstractmethod
     def __hash__(self):
         """Get a unique hash for the state."""
         raise NotImplementedError()

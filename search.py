@@ -1,9 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 """Algorithms for search."""
-import collections
-import heapq
+import abc
+import six
 import time
+import heapq
+import collections
 
 # # To enable BeamSearch, uncomment this line.
 # # You will need to install depq:
@@ -20,9 +22,11 @@ class TimeoutError(Exception):
     pass
 
 
+@six.add_metaclass(abc.ABCMeta)
 class Search:
     """A type of search."""
 
+    @abc.abstractmethod
     def create_queue(self):
         """Create a queue for storing the states in the search."""
         raise NotImplementedError()
@@ -45,10 +49,12 @@ class Search:
             self.push(queue, state)
             self.add_to_seen(state, seen, problem)
 
+    @abc.abstractmethod
     def push(self, queue, state):
         """Add a state to the queue."""
         raise NotImplementedError()
 
+    @abc.abstractmethod
     def pop(self, queue):
         """Get the next state from the queue."""
         raise NotImplementedError()
@@ -419,9 +425,11 @@ class IterativeDepthFirstSearch(BestFirstSearch):
 #         return element[0]
 
 
+@six.add_metaclass(abc.ABCMeta)
 class Heuristic:
     """An evaluation function used for heuristic purposes."""
 
+    @abc.abstractmethod
     def __call__(self, state):
         """Evaluate a state."""
         raise NotImplementedError()
