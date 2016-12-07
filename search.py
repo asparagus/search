@@ -261,7 +261,7 @@ class IterativeDepthFirstSearch(BestFirstSearch):
             timeout = float('inf')
 
         if not soft_timeout:
-            soft_timeout = float('inf')
+            soft_timeout = min(timeout, float('inf'))
 
         start = time.time()
         initial_state = initial_state or problem.initial_state()
@@ -284,10 +284,10 @@ class IterativeDepthFirstSearch(BestFirstSearch):
             current = time.time()
             ellapsed_time = current - start
 
-            if ellapsed_time > timeout:
-                raise TimeoutError()
-            elif best_solution and ellapsed_time > soft_timeout:
+            if best_solution and ellapsed_time > soft_timeout:
                 break
+            elif ellapsed_time > timeout:
+                raise TimeoutError()
 
             remaining_time = timeout - ellapsed_time
             new_solution = self.run(
