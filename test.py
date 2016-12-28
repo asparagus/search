@@ -19,6 +19,7 @@ Testing BFS, DFS, A*, IDFS on a ShortestPathProblem.
 >>> bfs = search.BreadthFirstSearch()
 >>> dfs = search.DepthFirstSearch()
 >>> a = search.BestFirstSearch()
+>>> bs = search.BeamSearch()
 >>> idfs = search.IterativeDepthFirstSearch()
 
 >>> bfs.solve(spp)
@@ -30,6 +31,8 @@ Testing BFS, DFS, A*, IDFS on a ShortestPathProblem.
 >>> a.solve(spp)
 {index: 0, value: 2, path: [4, 1, 0]}
 
+>>> bs.solve(spp)
+{index: 0, value: 2, path: [4, 1, 0]}
 
 >>> idfs.solve(spp)
 {index: 0, value: 2, path: [4, 1, 0]}

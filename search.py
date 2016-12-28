@@ -3,18 +3,12 @@
 """Algorithms for search."""
 import abc
 import six
+import math
 import time
 import heapq
 import collections
-
-# # To enable BeamSearch, uncomment this line.
-# # You will need to install depq:
-# # sudo pip install depq
-# # The library has a bug in its __init__.py file
-# # When trying to import DEPQ it will report an error.
-# # Fix it by replacing "from depq.depq import DEPQ"
-# # with "from depq import DEPQ"
-# from depq import DEPQ
+from depq import DEPQ
+from functools import partial
 
 
 class TimeoutError(Exception):
@@ -26,7 +20,6 @@ class TimeoutError(Exception):
 class Search:
     """A type of search."""
 
-    @abc.abstractmethod
     def create_queue(self):
         """Create a queue for storing the states in the search."""
         raise NotImplementedError()
@@ -49,12 +42,10 @@ class Search:
             self.push(queue, state)
             self.add_to_seen(state, seen, problem)
 
-    @abc.abstractmethod
     def push(self, queue, state):
         """Add a state to the queue."""
         raise NotImplementedError()
 
-    @abc.abstractmethod
     def pop(self, queue):
         """Get the next state from the queue."""
         raise NotImplementedError()
@@ -180,10 +171,8 @@ class BestFirstSearch(Search):
         >>> a.heuristic("Sample")
         0
         """
-        self.heuristic = heuristic
+        self.heuristic = heuristic or ZeroHeuristic()
         self.value_states_dict = {}
-        if not heuristic:
-            self.heuristic = ZeroHeuristic()
 
     def create_queue(self):
         """Create a priority queue for storing the states in the search."""
@@ -359,70 +348,66 @@ class IterativeDepthFirstSearch(BestFirstSearch):
 
         return current_state if reached_solution else None
 
-# # See message on import to enable BeamSearch.
-# # BeamSearch is dependent on the DEPQ library, which has a bug.
-# class BeamSearch(BestFirstSearch):
-#     """
-#     A modified BestFirstSearch Search.
 
-#     BeamSearch limits the memory used by keeping only a limited number
-#     of intermediate solutions.
-#     """
+class BeamSearch(BestFirstSearch):
+    """
+    A modified BestFirstSearch Search.
 
-#     def __init__(self, heuristic=None, beam_width=100):
-#         """
-#         Initialize an instance of BeamSearch.
+    BeamSearch limits the memory used by keeping only a limited number
+    of intermediate solutions.
+    """
 
-#         The instance requires an heuristic function which
-#         receives a state and outputs an expected delta for the solution.
+    def __init__(self, heuristic=None, beam_width=100):
+        """
+        Initialize an instance of BeamSearch.
 
-#         The heuristic must be admissible to ensure an optimal solution.
+        The instance requires an heuristic function which
+        receives a state and outputs an expected delta for the solution.
 
-#         If no heuristic is provided, the Zero Heuristic is used.
+        The heuristic must be admissible to ensure an optimal solution.
 
-#         >>> bs = BeamSearch()
-#         >>> bs.heuristic(1)
-#         0
-#         >>> bs.heuristic("Sample")
-#         0
-#         """
-#         self.heuristic = heuristic
-#         self.beam_width = beam_width
-#         self.value_states_dict = {}
-#         if not heuristic:
-#             self.heuristic = ZeroHeuristic()
+        If no heuristic is provided, the Zero Heuristic is used.
 
-#     def create_queue(self):
-#         """Create a priority queue for storing the states in the search."""
-#         return DEPQ()
+        >>> bs = BeamSearch()
+        >>> bs.heuristic(1)
+        0
+        >>> bs.heuristic("Sample")
+        0
+        """
+        self.beam_width = beam_width
+        self.value_states_dict = {}
+        self.heuristic = heuristic or ZeroHeuristic()
 
-#     def push(self, queue, state, value=None):
-#         """
-#         Add a state to the priority queue.
+    def create_queue(self):
+        """Create a priority queue for storing the states in the search."""
+        return DEPQ()
 
-#         The priority queue is double ended and keeps
-#         at most beam_width items.
-#         """
-#         if value is None:
-#             g = state.value
-#             h = self.heuristic(state)
-#             f = g + h
-#         else:
-#             f = value
+    def push(self, queue, state, value=None):
+        """
+        Add a state to the priority queue.
 
-#         # print "%s / %s" % (len(queue), self.beam_width)
-#         if len(queue) >= self.beam_width:
-#             high = queue.high()
-#             if f < high:
-#                 queue.insert(state, f)
-#                 queue.popfirst()
-#         else:
-#             queue.insert(state, f)
+        The priority queue is double ended and keeps
+        at most beam_width items.
+        """
+        if value is None:
+            g = state.value
+            h = self.heuristic(state)
+            f = g + h
+        else:
+            f = value
 
-#     def pop(self, queue):
-#         """Get the next state from the priority queue."""
-#         element = queue.poplast()
-#         return element[0]
+        if len(queue) >= self.beam_width:
+            high = queue.high()
+            if f < high:
+                queue.insert(state, f)
+                queue.popfirst()
+        else:
+            queue.insert(state, f)
+
+    def pop(self, queue):
+        """Get the next state from the priority queue."""
+        element = queue.poplast()
+        return element[0]
 
 
 @six.add_metaclass(abc.ABCMeta)
