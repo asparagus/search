@@ -2,11 +2,9 @@
 # -*- coding: utf-8 -*-
 """Contains the base class for transformating one problem to another."""
 import abc
-import six
 
 
-@six.add_metaclass(abc.ABCMeta)
-class Transformation:
+class Transformation(abc.ABC):
     """Base class for a transformation."""
 
     @abc.abstractmethod
