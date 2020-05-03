@@ -2,13 +2,11 @@
 # -*- coding: utf-8 -*-
 """Algorithms for search."""
 import abc
-import six
+import depq
 import math
 import time
 import heapq
 import collections
-from depq import DEPQ
-from functools import partial
 
 
 class TimeoutError(Exception):
@@ -16,8 +14,7 @@ class TimeoutError(Exception):
     pass
 
 
-@six.add_metaclass(abc.ABCMeta)
-class Search:
+class Search(abc.ABC):
     """A type of search."""
 
     def create_queue(self):
@@ -339,7 +336,8 @@ class IterativeDepthFirstSearch(BestFirstSearch):
                               for state in new_states]
 
                 values_with_states = zip(new_values, new_states)
-                for value, state in values_with_states[1:]:
+                next(values_with_states)  # Skip the first one
+                for value, state in values_with_states:
                     self.push(queue, state, value=value)
                     self.add_to_seen(state, seen, problem)
 
@@ -380,7 +378,7 @@ class BeamSearch(BestFirstSearch):
 
     def create_queue(self):
         """Create a priority queue for storing the states in the search."""
-        return DEPQ()
+        return depq.DEPQ()
 
     def push(self, queue, state, value=None):
         """
@@ -410,8 +408,7 @@ class BeamSearch(BestFirstSearch):
         return element[0]
 
 
-@six.add_metaclass(abc.ABCMeta)
-class Heuristic:
+class Heuristic(abc.ABC):
     """An evaluation function used for heuristic purposes."""
 
     @abc.abstractmethod

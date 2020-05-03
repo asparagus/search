@@ -2,11 +2,9 @@
 # -*- coding: utf-8 -*-
 """Classes needed to model a search algorithm."""
 import abc
-import six
 
 
-@six.add_metaclass(abc.ABCMeta)
-class Problem:
+class Problem(abc.ABC):
     """A problem to be solved."""
 
     @abc.abstractmethod
@@ -25,8 +23,7 @@ class Problem:
         raise NotImplementedError()
 
 
-@six.add_metaclass(abc.ABCMeta)
-class Action:
+class Action(abc.ABC):
     """An action for a given problem."""
 
     @abc.abstractmethod
@@ -43,8 +40,7 @@ class Action:
         return str(self)
 
 
-@six.add_metaclass(abc.ABCMeta)
-class State:
+class State(abc.ABC):
     """(Intermediate) State in the search for a solution."""
 
     @abc.abstractmethod
@@ -154,9 +150,9 @@ class ShortestPathState(State):
         String representation of the state.
 
         >>> s = ShortestPathState(1, 2)
-        >>> print s
+        >>> print(s)
         {index: 1, value: 2, path: [1]}
-        >>> print [s]
+        >>> print([s])
         [{index: 1, value: 2, path: [1]}]
         """
         return "{index: %s, value: %s, path: %s}" % (
