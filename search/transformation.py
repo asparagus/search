@@ -1,5 +1,3 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
 """Contains the base class for transformating one problem to another."""
 import abc
 
