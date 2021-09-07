@@ -21,10 +21,6 @@ class IterativeDepthFirstSearch(algorithms.BestFirstSearch):
         ):
         super().__init__(problem, evaluation_fn, heuristic_fn=heuristic_fn)
 
-    def sort_states(self, problem, states):
-        """Sort branched states before insertion."""
-        pass
-
     def solve(
             self,
             initial_state: Optional[problem.State] = None,
